@@ -22,6 +22,10 @@ dist/
 # Delegated coding deliverables (dated run folders + auto-run logs)
 waku_workspace/
 
+# Local git worktrees used for isolated subagent implementation work
+# (superpowers:using-git-worktrees) — never meant to be committed.
+.worktrees/
+
 # Google OAuth: the client file you download from Cloud Console, and any token
 # it produces. Nothing here should ever be committed — belt and braces, because
 # the docs used to tell people to drop credentials.json in the repo root.
