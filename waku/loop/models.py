@@ -95,6 +95,42 @@ PROVIDERS: dict[str, Provider] = {
     "xai":       Provider("openai", "XAI_API_KEY", "https://api.x.ai/v1",
                           "grok-4", "grok-4-fast",
                           catalog_url="https://api.x.ai/v1/models"),
+    # OmniRoute — a self-hosted proxy (HF Space). OpenAI-compatible wire, one key
+    # in front of ~108 upstream ids. catalog_url is deliberately left None so the
+    # Settings picker falls through to GET {base_url}/models and lists whatever
+    # the proxy serves today, instead of a hardcoded pair that goes stale every
+    # time its upstreams change.
+    #
+    # CHAT ONLY — NO FUNCTION CALLING. Measured 2026-08-05: sending `tools` with
+    # tool_choice="required" still returns tool_calls=None, finish_reason=stop.
+    # An endpoint that supports function calling CANNOT do that; "required" means
+    # the model must emit a call. So the param is dropped somewhere in the proxy.
+    # The reason is visible in its own Combos page: the upstreams are
+    # `gemini-web/*` — web-UI relays, not the Gemini API — and a chat UI has no
+    # function-calling surface to relay. Symptom to recognise: the model happily
+    # says "I have successfully scheduled it" having called nothing at all.
+    #
+    # Consequence for waku: the loop degenerates to a single pass (no tool_use →
+    # guardrail 1 returns immediately), so create_event / save_note / manage_memory
+    # never fire. Fine as a cheap chat brain or as small_model for the retrieval
+    # gate (that one only needs JSON text, no tools). Not fine as the loop brain.
+    "omniroute": Provider("openai", "OMNIROUTE_API_KEY",
+                          "https://hoangvusnape-my-api-ai.hf.space/v1",
+                          "gweb/gemini-3.1-pro", "gweb/gemini-3.5-flash"),
+    # The SAME router run locally (`omniroute serve`, port 20128), but with a
+    # real api-key provider connected instead of only cookie relays. Identical
+    # code, opposite result — measured side by side on 2026-08-05 through this
+    # one endpoint, same request, same minute:
+    #     openrouter/nemotron-3-super:free  -> tool_use emitted   (base.ts)
+    #     gweb/gemini-3.1-pro               -> nothing            (gemini-web.ts)
+    # That is the whole lesson: a gateway relays only what its executor for THAT
+    # upstream understands. Same proxy, same key, same wire format.
+    # Local /v1 needs no auth, but get_client refuses an empty key — any
+    # non-empty OMNIROUTE_LOCAL_API_KEY works as a placeholder.
+    "omniroute_local": Provider("openai", "OMNIROUTE_LOCAL_API_KEY",
+                                "http://localhost:20128/v1",
+                                "openrouter/nvidia/nemotron-3-super-120b-a12b:free",
+                                "openrouter/google/gemma-4-26b-a4b-it:free"),
     # OpenCode — OpenAI-compatible platform. Two endpoints: "zen" and "go"
     # share the same platform key. zen offers free models (default:
     # deepseek-v4-flash-free); go uses the standard deepseek-v4-flash.
@@ -125,6 +161,8 @@ KEY_URLS = {
     "xai": "https://console.x.ai",
     "opencode_zen": "https://opencode.ai/zen",
     "opencode_go": "https://opencode.ai/zen",
+    "omniroute": "https://hoangvusnape-my-api-ai.hf.space/dashboard/endpoint",
+    "omniroute_local": "http://localhost:20128/dashboard/endpoint",
 }
 
 

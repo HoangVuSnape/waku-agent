@@ -37,6 +37,11 @@ PRICING = {
     # (rough mid-catalog guess). ":free" ids and catalog-priced models never
     # hit this: see price_for().
     "openrouter": (1.0, 3.0),
+    # omniroute / omniroute_local — self-hosted proxy; every model currently
+    # configured for it (gweb/* web-UI relays, openrouter/*:free ids) is $0 to
+    # call. Not "unknown" — genuinely free, unlike the other estimates above.
+    "omniroute": (0.0, 0.0),
+    "omniroute_local": (0.0, 0.0),
 }
 
 # model id -> exact ($/M in, $/M out), filled from the live catalog fetch in
